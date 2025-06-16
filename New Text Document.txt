@@ -1,0 +1,558 @@
+Linear regresion 
+
+import numpy as np
+import pandas as pd
+c= np.linspace(-48,48,20)
+f=(9/5)*c+32
+X=c.reshape(-1,1)
+Y=f.reshape(-1,1)
+print(X)
+print(Y)
+x1=X
+y1=Y
+def feature_scalling(X):
+    mean=np.mean(X)
+    std=np.std(X)
+    X_scalling=(X-mean)/std
+    return X_scalling,mean,std
+x_scaled,mean_x,std_X=feature_scalling(X) # Use distinct variable names for X
+y_scaled,mean_y,std_Y=feature_scalling(Y) # Use distinct variable names for Y
+def linear_regression(X,Y):
+    X=np.concatenate((np.ones((X.shape[0],1)),X),axis=1)
+    theta=np.linalg.inv(X.T.dot(X)).dot(X.T).dot(Y)
+    return(theta)
+from sklearn.linear_model import LinearRegression
+reg=LinearRegression().fit(x1,y1)
+print("Coefficients in original space",reg.coef_)
+print("Intercept in original space",reg.intercept_)
+import matplotlib.pyplot as plt
+plt.scatter(X,Y)
+plt.plot(X,reg.predict(X))
+plt.show()
+----------------------------------------------------------------
+ KNN
+
+import numpy as np
+import matplotlib.pyplot as plt
+X=np.array([[0.5,1.5],[0.55,1.8],[0.6,1.9],[0.65,2.2],[1.5,4.5],[1.55,4.8],[1.6,4.9],[1.65,4.2]])
+y=[1,1,1,1,0,0,0,0]#labelling
+X_test=np.array([[1.5,3.2]])
+plt.scatter(X[:,0],X[:,1],c=y)
+plt.axis([0,5,0,8])
+plt.plot(X_test[:,0],X_test[:,1],'r*')
+plt.show()
+dist=np.sqrt(np.sum((X-X_test)**2,axis=1))
+print(dist)
+dist_list=[]
+for i in range(len(dist)):
+  dist_list.append([dist[i],y[i]])
+print(dist_list)
+dist_list.sort(key = lambda elem: elem[1] )
+print(dist_list)
+k=3
+neighbors=dist_list[:k]
+print(neighbors)
+idx=[]#get index of minimum distance
+for tup in neighbors:
+  idx.append(tup[1])
+print(idx)
+classidx=max(idx,key=idx.count)
+print("Clasified as class",classidx)
+--------------------------------------------------------------------
+ k means clustering
+
+import numpy as np
+a=np.array([[2,2],[4,2],[1,4]])
+b=np.array([[2,1]])
+distance=np.linalg.norm(b-a,axis=1)
+print(distance)
+print("The index of the point with minimum distance is:",np.argmin(distance))
+from matplotlib import pyplot as plt
+from sklearn.datasets import make_blobs
+K=3
+X,y_true=make_blobs(n_samples=50, centers=K, cluster_std=0.50, random_state=15)#500*2
+centroids=np.zeros((K,np.shape(X)[1]))
+print(centroids)
+number_of_rows=X.shape[0]
+random_indices=np.random.choice(number_of_rows, size=K, replace=False)
+centroids=X[random_indices,:]#6*2
+print(centroids)
+plt.scatter(X[:,0],X[:,1])
+plt.scatter(centroids[:,0],centroids[:,1], c='red', s=100)
+for iter in range (100):
+    classification=[]
+    d={}
+    for i in range(K):
+        d[i]=[]
+    for data in X:
+        distance=[]
+        for i in range(K):
+            distance.append((sum((data-centroids[i,:])**2)**0.5))
+            #distance.append(np.linalg.norm(data-centroids[i,:]))
+        idx=np.argmin(distance)
+        d[idx].append(data)
+        classification.append(idx)
+
+    for i in range(K):
+        centroids[i,:]=np.average(d[i],axis=0)
+for i in range(len(d)):
+    n=0
+    for j in d[i]:
+        n=n+1
+    print("The data points we have in",i,"is",n)
+    print("\n")
+plt.scatter(X[:,0],X[:,1], c=classification)
+plt.scatter(centroids[:,0],centroids[:,1], c='red', s=100)
+------------------------------------------------------------------------------
+LOgistic
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+c = np.linspace(-48, 48, 20)  
+f = (9/5) * c + 32  
+X = c.reshape(-1, 1)  
+Y = (f > 32).astype(int).reshape(-1, 1) 
+def feature_scaling(X):
+    mean = np.mean(X)
+    std = np.std(X)
+    X_scaled = (X - mean) / std
+    return X_scaled, mean, std
+X_scaled, mean_x, std_x = feature_scaling(X)
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+def compute_cost(X, y, theta):
+    m = len(y)
+    h = np.clip(sigmoid(X @ theta), 1e-9, 1 - 1e-9) 
+    cost = (-1/m) * np.sum(y * np.log(h) + (1 - y) * np.log(1 - h))
+    return cost
+def gradient_descent(X, y, theta, alpha, iterations):
+    m = len(y)
+    cost_history = []
+    for _ in range(iterations):
+        h = sigmoid(X @ theta)
+        gradient = (1/m) * X.T @ (h - y)
+        theta -= alpha * gradient
+        cost_history.append(compute_cost(X, y, theta))
+    return theta, cost_history
+X_bias = np.hstack((np.ones((X_scaled.shape[0], 1)), X_scaled))
+theta = np.zeros((X_bias.shape[1], 1)) 
+alpha = 0.1
+iterations = 1000
+theta, cost_history = gradient_descent(X_bias, Y, theta, alpha, iterations)
+X_test = np.linspace(-50, 50, 100).reshape(-1, 1)
+X_test_scaled = (X_test - mean_x) / std_x
+X_test_bias = np.hstack((np.ones((X_test_scaled.shape[0], 1)), X_test_scaled))
+predictions = sigmoid(X_test_bias @ theta)
+plt.scatter(X, Y, color='blue', label="Data")
+plt.plot(X_test, predictions, color='red', label="Logistic Regression Curve")
+plt.xlabel("Celsius")
+plt.ylabel("Probability (F > 32°F)")
+plt.legend()
+plt.grid(True)
+plt.show()
+-------------------------------------------------------------------------------------------------
+
+SoftMax
+
+import numpy as np
+
+z= [0.6, 1.1,-1.5,1.2,3.2,-1.1]
+
+def softmax(z):
+    element = np.exp(z)/np.sum(np.exp(z))
+    return element
+list =softmax(z)
+print(list)
+max_z = np.array(softmax(z)).argmax()
+print(max_z)
+print(list.argmax())
+a = list.argmax()
+print(z[a])
+from scipy.special import softmax
+from sklearn.datasets import make_blobs
+from sklearn import preprocessing
+K=4
+X,y = make_blobs(n_samples=K*100, centers = K,cluster_std =0.3, random_state=2)
+import matplotlib.pyplot as plt
+#print(X)
+print(X.shape)
+plt.scatter(X[:,0],X[:,1],c=y)
+print(y.shape)
+def mapfeature(X1,X2, degree):
+    res = np.ones(X1.shape[0])
+    for i in range(1,degree+1):
+        for j in range(0,i+1):
+            res = np.column_stack((res,(X1**(i-j))*(X2 **j)))
+    return res
+
+mapfeature(X[0],X[1],2)
+def cross_entropy_loss(X,ytrue,theta):
+    z = dot(X,theta)
+    ypredict =softmax(z)
+    return -(1/ytrue.shape[0])*((np.dot(ytrue,np.log(ypredict))+ np.dot((1-ytrue),np.log(1-ypredict))))
+from sklearn.preprocessing import LabelBinarizer
+
+y_onehot = LabelBinarizer().fit_transform(y)
+print(y_onehot)
+polydeg=1
+
+from sklearn.model_selection import train_test_split
+X_tr,X_te, y_tr, y_te = train_test_split(X,y_onehot,test_size=0.1)
+X_tr = mapfeature(X_tr[:,0],X_tr[:,1],polydeg)
+
+print(X_tr.shape, X_te.shape, y_tr.shape,y_te.shape)
+print(y_te)
+print(X_tr)
+n= X_tr.shape[1]
+m= X_tr.shape[0]
+theta = np.zeros((n,K))
+lr=0.1
+for iter in range(500):
+    for sample in range(m):
+        x = X_tr[sample,:].reshape((1,n))
+        yhat = softmax(np.dot(x,theta))
+        error = yhat - y_tr[sample,:]
+        gradients = np.dot(x.T,error)
+        theta = theta - lr*gradients
+def predict(X,theta,y):
+    y.reshape((-1,1))
+    Xmap = mapfeature(X[:,0],X[:,1],polydeg)
+    yp = softmax(np.dot(Xmap,theta))
+    ind = np.array(yp).argmax()
+    return y[ind]
+x_min,x_max= X[:,0].min()+ (X[:,0].min()/2),X[:,0].max()+(X[:,0].max()/2)
+y_min,y_max= X[:,1].min()+ (X[:,1].min()/2),X[:,1].max()+(X[:,1].max()/2)
+h=0.01
+
+xx,yy = np.meshgrid(np.arange(x_min,x_max,h),np.arange(y_min,y_max,h))
+Xn = (np.c_[xx.ravel(),yy.ravel()])
+print("Xn:",Xn)
+Xmap = mapfeature(Xn[:,0],Xn[:,1],polydeg)
+yp= softmax(np.dot(Xmap,theta))
+ind = np.argmax(yp,axis=1)
+
+P=y[ind]
+print(P.shape)
+Q =ind.reshape(xx.shape)
+print(Q.shape)
+
+plt.contourf(xx,yy,Q,cmap=plt.cm.Spectral)
+plt.ylabel('x2')
+plt.xlabel('x1')
+plt.scatter(X[:,0],X[:,1],c=y)
+plt.show()
+---------------------------------------------------------------------------
+CNN single
+import tensorflow as tf
+from tensorflow.keras import datasets,layers,models
+import matplotlib.pyplot as plt
+(train_images,train_labels),(test_images,test_labels)=datasets.cifar10.load_data()
+print("train images: ",train_images.shape)
+print("train labels: ",train_labels.shape)
+print(train_images.shape[0],"train samples")
+print(test_images.shape[0],"test samples")
+train_images,test_images=train_images/255.0,test_images/255.0
+class_names=['airplane','automobiles','bird','cat','deer','dog','frog','horse','ship','truck']
+plt.figure(figsize=(10,10))
+for i in range(25):
+  plt.subplot(5,5,i+1)
+  plt.xticks([])
+  plt.yticks([])
+  plt.grid(False)
+  plt.imshow((train_images[i]))
+  plt.xlabel(class_names[train_labels[i][0]])
+plt.show()
+model=models.Sequential()
+model.add(layers.Conv2D(10,(3,3),activation='relu',input_shape=(32,32,3)))
+model.add(layers.MaxPooling2D((2,2)))
+model.add(layers.Conv2D(20,(3,3),activation='relu'))
+model.add(layers.MaxPooling2D((2,2)))
+model.add(layers.Conv2D(40,(3,3),activation='relu'))
+model.summary()
+model.add(layers.Flatten())
+model.add(layers.Dense(64,activation='relu',kernel_initializer='he_uniform'))
+model.add(layers.Dense(10,activation='softmax'))
+model.summary()
+model.compile(optimizer='adam',loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics=['accuracy'])
+history=model.fit(train_images,train_labels,epochs=10,validation_data=(test_images,test_labels))
+plt.plot(history.history['accuracy'],label='accuracy')
+plt.plot(history.history['val_accuracy'],label='val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.ylim([0.5,1])
+plt.legend(loc='lower right')
+test_loss,test_acc=model.evaluate(test_images,test_labels,verbose=0)
+print(test_acc)
+----------------------------------------------------------------------------------------------------------
+CNN multi
+import numpy as np
+import csv
+import string
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, array_to_img
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
+import subprocess
+
+subprocess.run(["gdown", "--id", "1z0DkA9BytlLxO1C0BAWzknLyQmZAp0HR"])
+subprocess.run(["gdown", "--id", "1z1BIj4qmri59GWBG4ivMNFtpZ4AXIbzg"])
+TRAINING_FILE='sign_mnist_train.csv'
+VALIDATION_FILE='sign_mnist_test.csv'
+with open(TRAINING_FILE) as training_file:
+  line=training_file.readline()
+  print(f'First line (header) looks')
+  line=training_file.readline()
+  print(f'Second line (header) looks like {line}')
+def parse_data_from_input(filename):
+    with open(filename) as training_file:
+        reader = csv.reader(training_file,delimiter=',')
+        imgs=[]
+        labels=[]
+        next(reader,None)
+        for row in reader:
+            label=row[0]
+            data=row[1:]
+            img=np.array(data).reshape((28,28))
+            imgs.append(img)
+            labels.append(label)
+        images=np.array(imgs).astype(float)
+        labels=np.array(labels).astype(float)
+    return images, labels
+training_images,training_labels=parse_data_from_input(TRAINING_FILE)
+validation_images,validation_labels=parse_data_from_input(VALIDATION_FILE)
+print(f"Training image has shape:{training_images.shape} and dtype:{training_images.dtype}")
+print(f"Training labels has shape:{training_labels.shape} and dtype:{training_labels.dtype}")
+print(f"validation image has shape:{validation_images.shape} and dtype:{validation_images.dtype}")
+print(f"validation labels has shape:{validation_labels.shape} and dtype:{validation_labels.dtype}")
+def plot_categories(training_images,training_labels):
+  fig,axes=plt.subplots(1,10,figsize=(16,15))
+  axes=axes.flatten()
+  letters=list(string.ascii_lowercase)
+  for k in range(10):
+    img=training_images[k]
+    img=np.expand_dims(img,axis=-1)
+    img=array_to_img(img)
+    ax=axes[k]
+    ax.imshow(img,cmap='gray')
+    ax.set_title(f"{letters[int(training_labels[k])]}")
+    ax.set_axis_off()
+  plt.tight_layout()
+  plt.show()
+plot_categories(training_images,training_labels)
+def train_val_generators(training_images, training_labels, validation_images, validation_labels):
+  training_images = np.expand_dims(training_images, axis=3)
+  validation_images = np.expand_dims(validation_images, axis=3)
+
+  train_datagen = ImageDataGenerator(rescale=1./255,rotation_range=10, width_shift_range=0.2, height_shift_range=0.2,  zoom_range=0.2)
+  train_datagen = train_datagen.flow(x=training_images, y=training_labels, batch_size=32)
+
+  validation_datagen = ImageDataGenerator(rescale=1./255)
+  validation_datagen = validation_datagen.flow(x=validation_images, y=validation_labels, batch_size=32)
+
+  return train_datagen, validation_datagen
+train_generator, validation_generator = train_val_generators(training_images, training_labels, validation_images, validation_labels)
+print(f"Images of training generator have shape: {train_generator.x.shape}")
+print(f"Labels of training generator have shape: {train_generator.y.shape}")
+print(f"Images of validation generator have shape: {validation_generator.x.shape}")
+print(f"Labels of validation generator have shape: {validation_generator.y.shape}")
+model=models.Sequential()
+model.add(layers.Conv2D(10,(3,3),activation='relu',input_shape=(28,28,1)))
+model.add(layers.MaxPooling2D((2,2)))
+model.add(layers.Conv2D(20,(3,3),activation='relu'))
+model.add(layers.MaxPooling2D((2,2)))
+model.add(layers.Conv2D(40,(3,3),activation='relu'))
+model.summary()
+model.add(layers.Flatten())
+model.add(layers.Dense(64,activation='relu', kernel_initializer='he_uniform'))
+model.add(layers.Dense(26, activation='softmax'))
+model.summary()
+model.compile(optimizer='adam',loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics=['accuracy'])
+history=model.fit(training_images,training_labels,epochs=10,validation_data=(validation_images,validation_labels))
+plt.plot(history.history['accuracy'],label='accuracy')
+plt.plot(history.history['val_accuracy'],label='val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.ylim([0.5,1])
+plt.legend(loc='lower right')
+test_loss,test_acc=model.evaluate(validation_images,validation_labels,verbose=0)
+print(test_acc)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+Likelyhoood
+
+import numpy as np
+x_0 = np.array([1, 1, 1, 1]) 
+x_1 = np.array([0.4, 0.6, -0.3, -0.7])
+x_2 = np.array([-0.2, -0.5, 0.8, 0.5])
+y = np.array([1, 1, 0, 0])
+X = np.vstack((x_0, x_1, x_2)).T  
+theta = np.array([0.5, 1, 2]) 
+z = np.dot(X, theta)  
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+px = sigmoid(z)
+print("Predicted probabilities p(x):\n", px)
+likelihood = np.prod(px**y * (1 - px)**(1 - y))
+print("\nLikelihood:", likelihood)
+log_likelihood = np.sum(y*np.log(px) + (1 - y)*np.log(1 - px))
+print("Log-Likelihood:", log_likelihood)
+-----------------------------------------------------------------------------------------------------------
+MLP
+#MLP
+import numpy as np
+def sigmoid(X):
+  return 1/(1+ np.exp(-X))
+def cost_computation(y,yhat):
+  logprobs = -(1/m)*np.sum(np.multiply(y,np.log(yhat))+ np.multiply((1-y),np.log(1-yhat)))
+  return logprobs
+
+inp = np.array([[0,0],[0,1],[1,0],[1,1]])
+out= np.array([[1,0,0,1]])
+
+X = inp.T
+Y= out
+
+n0,m = X.shape
+print(n0)
+
+n1= 5
+W1 = np.random.random((n1,n0))
+b1= np.zeros((n1,1))
+
+n2=1
+W2 = np.random.random((n2,n1))
+b2= np.zeros((n2,1))
+
+cost=[]
+lr= 0.1
+
+for epoch in range(20000):
+  Z1 = np.dot(W1,X)+b1
+  A1= sigmoid(Z1)
+  Z2 = np.dot(W2,A1)+b2
+  A2 = sigmoid(Z2)
+  cost.append(np.squeeze(cost_computation(Y,A2)))
+
+  dZ2 = A2- Y
+  dW2 = (1/m)*np.dot(dZ2,A1.T)
+  db2 = np.sum(dZ2,axis =1, keepdims= True)
+  dZ1 = np.multiply(np.dot(W2.T,dZ2),(A1*(1-A1)))
+  dW1 = (1/m)*np.dot(dZ1,X.T)
+  db1= (1/m)*np.sum(dZ1,axis=1, keepdims=True)
+
+  W1 = W1 - lr*dW1
+  W2= W2 - lr*dW2
+  b1 = b1 - lr*db1
+  b2 = b2 - lr*db2
+
+
+print(A2)
+
+import matplotlib.pyplot as plt
+Cost = np.array(cost)
+plt.plot(Cost)
+plt.show()
+---------------------------------------------------------------------------------------
+Naive bayes
+#naive bayes
+import numpy as np
+import matplotlib.pyplot as plt
+X = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9],
+              [10, 8, 4, 9, 1, 6, 9, 2, 10]]).T
+y = np.array([0, 0, 0, 1, 1, 1, 0, 1, 0])
+Test_data = np.array([[10],[2]]).T
+plt.scatter(X[:,0],X[:,1],c=y)
+plt.scatter(Test_data[:,0],Test_data[:,1],c='r')
+m,n = X.shape # n = number of features
+classes = np.unique(y)
+print(classes)
+n_classes = len(classes)
+print(n_classes)
+class_probs = {}
+mean_std = {}
+mean_ = {}
+std_ = {}
+for c in classes:
+    class_probs[c] = len(y[y == c]) / m
+print("Class_probs:",class_probs)
+for c in classes:
+    X_c = X[y == c]
+    mean_std[c] = [(X_c[:, i].mean(), X_c[:, i].std()) for i in range(n)]
+print(mean_std)
+print(mean_std[0][0])
+mean, std = mean_std[1][0]
+C=[1,20,30]
+for k in enumerate(C):
+  print(k)
+for k,l in enumerate(C): 
+  print(l)
+predictions =[]
+for x in Test_data:
+  class_scores = np.zeros(n_classes)
+  for i,c in enumerate(classes):
+    class_scores[i] = np.log(class_probs[c]) ## log-Prior probability
+    for j in range(n):# no of features
+        mean, std = mean_std[c][j]
+        exponent = -((x[j] - mean) ** 2) / (2 * std ** 2)
+        class_scores[i] += np.log(1 / (np.sqrt(2 * np.pi) * std))\
+         + exponent # log prior + log likelihood
+  predicted_class = classes[np.argmax(class_scores)]
+  predictions.append(predicted_class)
+print(class_scores)
+print(predictions)
+----------------------------------------------------------------------------------------
+decision tree
+import numpy as np
+from sklearn.datasets import make_blobs
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
+from mlxtend.plotting import plot_decision_regions
+X,Y = make_blobs(n_samples=500, centers=2, n_features=2,random_state=100,cluster_std=1.5)
+a = DecisionTreeClassifier(max_depth=4,criterion='entropy', random_state=1)
+a.fit(X,Y)
+plot_decision_regions(X,Y,clf=a)
+plt.show()
+-------------------------------------------------------------------------------------
+SVM
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+X=np.array([[-2,4],[4,1],[1,6],[2,4],[6,2]])
+y=np.array([-1,-1,1,1,1])
+plt.scatter(X[:,0],X[:,1],c=y)
+plt.show()
+X=np.array([[-2,4,1],[4,1,1],[1,6,1],[2,4,1],[6,2,1]])
+def sum_sgd(X,Y):
+  W=np.zeros(len(X[0]))
+  eta=1;
+  epochs=100000
+  for epoch in range(1,epochs):
+    for i,x in enumerate(X):
+      if(Y[i]*np.dot(X[i],W))<1:
+        W=W+eta*((X[i]*Y[i])+(-2*(1/epoch)*W))
+      else:
+        W=W+eta*(-2*(1/epoch)*W)
+  return W
+W=sum_sgd(X,y)
+print(W)
+for i in X:
+  val=np.dot(i,W)
+  print(np.sign(val))
+plt.scatter(X[:,0],X[:,1],s=50,c=y)
+x2=[W[0],W[1],-W[1],W[0]]
+x3=[W[0],W[1],W[1],-W[0]]
+x2x3=np.array([x2,x3])
+x1,Y,U,V=zip(*x2x3)
+plt.quiver(x1,Y,U,V,scale=10,color='blue')
+print(x2)
+print(x3)
+print(x2x3)
+print(x1)
+print(Y)
+print(U)
+print(V)
+----------------------------------------------------------------------------
+
